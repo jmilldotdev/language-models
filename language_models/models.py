@@ -66,8 +66,15 @@ class GooseAILanguageModelSettings:
     engine_id: str = "gpt-neo-20b"
     temperature: float = 1.0
     top_p: float = 1.0
+    top_k: int = 0
+    tfs: float = 1.0
+    top_a: float = 1.0
+    typical_p: float = 1.0
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0
+    repetition_penalty: float = 1.0
+    repetition_penalty_slope: float = 0.0
+    repetition_penalty_range: int = 0
 
 
 class GooseAILanguageModel(LanguageModel):
@@ -88,7 +95,9 @@ class GooseAILanguageModel(LanguageModel):
         prompt: str,
         max_tokens: int,
         n: int = 1,
+        min_tokens: int = 1,
         stop: list = None,
+        logit_bias: dict[str, float] = None,
         **kwargs: any,
     ) -> str:
         headers = {
@@ -98,9 +107,26 @@ class GooseAILanguageModel(LanguageModel):
         payload = {
             "prompt": prompt,
             "max_tokens": max_tokens,
+            "n": n,
+            "min_tokens": min_tokens,
+            "stop": stop if stop else [],
+            "logit_bias": logit_bias if logit_bias else {},
             "temperature": kwargs.get("temperature") or self.settings.temperature,
-            "topP": kwargs.get("top_p") or self.settings.top_p,
-            "stopSequences": stop if stop else [],
+            "top_p": kwargs.get("top_p") or self.settings.top_p,
+            "top_k": kwargs.get("top_k") or self.settings.top_k,
+            "tfs": kwargs.get("tfs") or self.settings.tfs,
+            "top_a": kwargs.get("top_a") or self.settings.top_a,
+            "typical_p": kwargs.get("typical_p") or self.settings.typical_p,
+            "frequency_penalty": kwargs.get("frequency_penalty")
+            or self.settings.frequency_penalty,
+            "presence_penalty": kwargs.get("presence_penalty")
+            or self.settings.presence_penalty,
+            "repetition_penalty": kwargs.get("repetition_penalty")
+            or self.settings.repetition_penalty,
+            "repetition_penalty_slope": kwargs.get("repetition_penalty_slope")
+            or self.settings.repetition_penalty_slope,
+            "repetition_penalty_range": kwargs.get("repetition_penalty_range")
+            or self.settings.repetition_penalty_range,
         }
         engine = kwargs.get("engine_id") or self.settings.engine_id
         route = self.completion_route(engine)
