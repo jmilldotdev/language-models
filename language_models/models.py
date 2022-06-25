@@ -16,10 +16,23 @@ class LanguageModel(ABC):
 
 
 @dataclass
+class AI21PenaltyData:
+    scale: float = 0.0
+    applyToWhitespaces: bool = True
+    applyToPunctuations: bool = True
+    applyToNumbers: bool = True
+    applyToStopwords: bool = True
+    applyToEmojis: bool = True
+
+
+@dataclass
 class AI21JurassicLanguageModelSettings:
     model_type: str = "j1-jumbo"
     temperature: float = 1.0
     top_p: float = 1.0
+    presence_penalty: AI21PenaltyData = AI21PenaltyData()
+    count_penalty: AI21PenaltyData = AI21PenaltyData()
+    frequency_penalty: AI21PenaltyData = AI21PenaltyData()
 
 
 class AI21JurassicLanguageModel(LanguageModel):
@@ -38,8 +51,9 @@ class AI21JurassicLanguageModel(LanguageModel):
     def complete(
         self,
         prompt: str,
-        max_tokens: int,
+        max_tokens: int = 16,
         stop: list = None,
+        logit_bias: dict[str, float] = None,
         **kwargs: any,
     ) -> str:
         headers = {
@@ -52,6 +66,16 @@ class AI21JurassicLanguageModel(LanguageModel):
             "temperature": kwargs.get("temperature") or self.settings.temperature,
             "topP": kwargs.get("top_p") or self.settings.top_p,
             "stopSequences": stop if stop else [],
+            "logitBias": logit_bias if logit_bias else {},
+            "presencePenalty": (
+                kwargs.get("presence_penalty") or self.settings.presence_penalty
+            ).__dict__,
+            "countPenalty": (
+                kwargs.get("count_penalty") or self.settings.count_penalty
+            ).__dict__,
+            "frequencyPenalty": (
+                kwargs.get("frequency_penalty") or self.settings.frequency_penalty
+            ).__dict__,
         }
         model_type = kwargs.get("model_type") or self.settings.model_type
         route = self.completion_route(model_type)
@@ -93,7 +117,7 @@ class GooseAILanguageModel(LanguageModel):
     def complete(
         self,
         prompt: str,
-        max_tokens: int,
+        max_tokens: int = 16,
         n: int = 1,
         min_tokens: int = 1,
         stop: list = None,
